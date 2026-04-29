@@ -1,9 +1,9 @@
 from kivy.app import App
 from kivy.uix.label import Label
 
-class MainApp(App):
+class MyApp(App):
     def build(self):
-        return Label(text="Python打包APK成功")
+        return Label(text="Hello GitHub APK")
 
 if __name__ == "__main__":
-    MainApp().run()
+    MyApp().run()
