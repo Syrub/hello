@@ -18,12 +18,35 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y git zip unzip openjdk-17-jdk wget libffi-dev libssl-dev
+          sudo apt install -y git zip unzip openjdk-17-jdk wget libffi-dev libssl-dev expect
 
       - name: Install Python dependencies
         run: |
-          pip install --upgrade pip
-          pip install buildozer cython
+          pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple
+          pip install buildozer cython -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+      - name: Pre-configure Android SDK
+        run: |
+          mkdir -p ~/.buildozer/android/platform
+          cd ~/.buildozer/android/platform
+          # 用国内镜像下载命令行工具
+          wget -q https://mirrors.tuna.tsinghua.edu.cn/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip -q commandlinetools-linux-9477386_latest.zip
+          mkdir -p cmdline-tools/latest
+          mv cmdline-tools/* cmdline-tools/latest/ || true
+          export PATH=$PATH:~/.buildozer/android/platform/cmdline-tools/latest/bin
+          # 用 expect 自动接受所有许可证
+          cat > accept_licenses.exp << 'EOF'
+          #!/usr/bin/expect -f
+          set timeout 10
+          spawn sdkmanager --licenses
+          expect "Accept? (y/N):" { send "y\r"; exp_continue }
+          expect eof
+          EOF
+          chmod +x accept_licenses.exp
+          ./accept_licenses.exp
+          # 安装必要组件
+          sdkmanager --install "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653" --no-cache
 
       - name: Build APK
         run: buildozer android debug
